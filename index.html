@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta content="yes" name="mobile-web-app-capable">
+  <meta content="website" name="og:type" property="og:type">
+
+  <title>My Public IP?</title>
+  <style>
+    * {
+      font-family: Verdana, Tahoma, sans-serif
+    }
+
+    section * {
+      display: inline-block
+    }
+
+    #list section:first-child {
+      margin-bottom: 1.69rem;
+      background-color: #B0B0B0;
+      /* Viber violet */
+      color: white;
+
+      border-radius: 0.5rem;
+    }
+
+    #list section:first-child .ip {
+      font-size: x-large;
+    }
+
+    #list section:first-child * {
+      font-size: medium;
+    }
+
+    #list label {
+      margin-right: 2rem;
+    }
+
+    #list span {
+      font-size: 0.6rem;
+    }
+
+    .tag {
+      padding: 0.2rem 0.6rem;
+      margin: 0.5rem 0.33rem;
+      border-radius: 0.5rem;
+      border: 1px solid #665CAC;
+    }
+
+    .ip {
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #665CAC;
+      color: white
+    }
+  </style>
+</head>
+
+<body>
+  <h2>your Public IP <label class="tag ip" id="lastIP"></label> <button onclick="clearTimestamp()">Clear old timestamps</button></h2>
+
+  <div id="app">
+    <div id="list">
+    </div>
+  </div>
+
+  <!-- <script src="https://zeptojs.com/zepto.min.js" crossorigin="anonymous"></script> -->
+  <script src="zepto.min.js"></script>
+
+  <script>
+    var lastIP = "";
+    const OFFLINE = "offline"
+
+    function clearTimestamp() {
+      // keep first 2 elements
+      $("section").find("*:not(:nth-child(-n+2))").remove()
+    }
+
+    function createTimestampTag() {
+      // let d = (new Date())        
+      // let timestamp = `${d.getHours()}:${d.getMinutes()}`;
+
+      let timestamp = (new Date()).toLocaleTimeString();
+      return $("<span class='tag'>").text(timestamp)
+    }
+
+    function createIpTag(ip) {
+      return $("<label class='tag ip'>").text(ip)
+    }
+
+    /**
+     * Still throw Error to console in case of Offline, can't solve it with .catch()
+     */
+    async function GetIPText() {
+      if (navigator.onLine) { // when having multiple LAN connection, this is meaningless. still true if connected to any LAN (even that LAN is not provide Internet)        
+        try {
+          let res = await fetch("https://api.ipify.org/")
+          let ip = await res.text();
+          return ip
+        } catch (error) { }
+      }
+
+      return OFFLINE
+    }
+
+    $(document).ready(async function (params) {
+      const $list = $("#list");
+
+      async function renderIp(params) {
+        let ip = await GetIPText();
+        $("#lastIP").text(ip)        
+
+        if (lastIP !== ip) {
+          $list.prepend($("<section>").append(createIpTag(ip), createTimestampTag()));
+        }
+        else {
+          $list.find("section:first-child *:first-child").after(createTimestampTag())
+          // console.log(`nothing change, IP is still ${lastIP}`)
+        }
+        // DEBUG   $list.append($("<section>").append(createIpTag(ip), createTimestampTag(), createTimestampTag() ));
+
+        lastIP = ip
+        return ip
+      }
+
+      await renderIp()
+      setInterval(renderIp, 5555)
+
+    })
+  </script>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-27836764-6"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-27836764-6');
+  </script>
+
+</body>
+</html>
